@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React,{useState,useEffect} from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
@@ -11,11 +11,7 @@ import IconButton from "@material-ui/core/IconButton";
 import SendRoundedIcon from "@material-ui/icons/SendRounded";
 import Divider from "@material-ui/core/Divider";
 
-import io from "socket.io-client";
-const socket = io.connect(
-  "https://vc-petco-client.litmus7.com:1367/notifications"
-);
-socket.emit("join", { room: "room_6077e21a2ab80e74b36bb9d2" });
+import useChat from "../../Hooks/useChat"
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -49,21 +45,27 @@ const useStyles = makeStyles((theme) => ({
     position: "absolute",
     bottom: "0px",
   },
+ 
 }));
 
 export default function ChatBox() {
   const classes = useStyles();
-  const [response, setResponse] = useState([]);
+  const { message,sendMessage } = useChat("room_6077e21a2ab80e74b36bb9d2");
+  const [newMessage, setNewMessage] = useState("");
+
+  const handleNewMessageChange = (e) => {
+    setNewMessage(e.target.value);
+  };
+
+  const handleSendMessage = () => {
+    sendMessage(newMessage)
+    setNewMessage('')
+  }
 
   useEffect(() => {
-    socket.on("update_message", (data) => {
-      console.log(data);
-      setResponse([...response, data]);
-    });
-    socket.emit("chat message", "hello team");
-  }, [response]);
+    document.querySelector('#ui').scrollTop=document.querySelector('#ui').scrollHeight
+  },[message])
 
-  console.log(response);
   return (
     <Card className={classes.root}>
       <CardHeader
@@ -76,11 +78,11 @@ export default function ChatBox() {
         subheader="September 14, 2016"
       />
       <Divider />
-      <CardContent>
-        {response &&
-          response.map((chat, index) => {
+      <CardContent id="ui" style={{overflow: 'auto',maxHeight: '74%'}}>
+        {message &&
+          message.map((chat, index) => {
             return (
-              <div key={index}>
+              <div  key={index}>
                 {(() => {
                   if (chat.type === "agent") {
                     return (
@@ -125,9 +127,15 @@ export default function ChatBox() {
         <OutlinedInput
           id="outlined-adornment-password"
           type="text"
+          value={newMessage}
+          onChange={handleNewMessageChange}
           endAdornment={
             <InputAdornment position="end">
-              <IconButton aria-label="toggle password visibility" edge="end">
+              <IconButton
+                aria-label="toggle password visibility"
+                edge="end"
+                onClick={handleSendMessage}
+              >
                 <SendRoundedIcon />
               </IconButton>
             </InputAdornment>

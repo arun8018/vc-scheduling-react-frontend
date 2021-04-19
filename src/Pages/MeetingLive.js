@@ -3,6 +3,8 @@ import { init as initWebex } from "webex";
 import Header from "../Components/Header";
 import ChatBox from "../Components/ChatBox";
 import logo from "../assets/images/tatcha-name-logo.png";
+import useChat from "../Hooks/useChat";
+
 // import Draggable from "react-draggable";
 // Initialize the SDK and make it available to the window
 const webex = (window.webex = initWebex({
@@ -24,6 +26,8 @@ export default function MeetingLive() {
   const videoTag = useRef();
   const RemoteVideoTag = useRef();
   const [text, setText] = useState("");
+  const { message } = useChat("room_6077e21a2ab80e74b36bb9d2");
+
 
   const handleChange = (e) => {
     setText(e.target.value);
@@ -90,6 +94,7 @@ export default function MeetingLive() {
     });
   }
 
+  console.log("message from meeting page",message)
   return (
     <div>
       <Header title={""} logo={logo} />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React,{useState} from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
@@ -10,12 +10,8 @@ import FormControl from "@material-ui/core/FormControl";
 import IconButton from "@material-ui/core/IconButton";
 import SendRoundedIcon from "@material-ui/icons/SendRounded";
 import Divider from "@material-ui/core/Divider";
+import useChat from "../Hooks/useChat"
 
-import io from "socket.io-client";
-const socket = io.connect(
-  "https://vc-petco-client.litmus7.com:1367/notifications"
-);
-socket.emit("join", { room: "room_6077e21a2ab80e74b36bb9d2" });
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -53,17 +49,14 @@ const useStyles = makeStyles((theme) => ({
 
 export default function ChatWindow() {
   const classes = useStyles();
-  const [response, setResponse] = useState([]);
+  const { message } = useChat("room_6077e21a2ab80e74b36bb9d2");
+  const [sendMessage,setSendMessage]=useState('')
+  
+  const handleSendMessage = (e) => {
+    setSendMessage(e.target.value)
+  }
 
-  useEffect(() => {
-    socket.on("update_message", (data) => {
-      console.log(data);
-      setResponse([...response, data]);
-    });
-    socket.emit("chat message", "hello team");
-  }, [response]);
-
-  console.log(response);
+  console.log(sendMessage);
   return (
     <Card className={classes.root}>
       <CardHeader
@@ -77,8 +70,8 @@ export default function ChatWindow() {
       />
       <Divider />
       <CardContent>
-        {response &&
-          response.map((chat, index) => {
+        {message &&
+          message.map((chat, index) => {
             return (
               <div key={index}>
                 {(() => {
@@ -125,6 +118,8 @@ export default function ChatWindow() {
         <OutlinedInput
           id="outlined-adornment-password"
           type="text"
+          value={sendMessage}
+          handleChange={handleSendMessage}
           endAdornment={
             <InputAdornment position="end">
               <IconButton aria-label="toggle password visibility" edge="end">
