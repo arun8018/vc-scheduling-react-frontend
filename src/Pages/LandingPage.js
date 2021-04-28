@@ -1,4 +1,5 @@
 import React from "react";
+import { useHistory } from "react-router-dom";
 import logo from "../assets/images/tatcha-name-logo.png";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
@@ -18,10 +19,15 @@ const useStyles = makeStyles((theme) => ({
 }));
 export default function LandingPage() {
   const classes = useStyles();
+  let history = useHistory();
+  const handleButtonClick = () => {
+    history.push("/meeting-page");
+  }
+    console.log("helloooooo", process.env.REACT_APP_CUSTOM);
 
   return (
     <>
-          <Header title={""} logo={logo}/>
+      <Header title={""} logo={logo} />
       <Container component="main" maxWidth="sm">
         <Card>
           <UserCard />
@@ -45,7 +51,11 @@ export default function LandingPage() {
               <Button label={"Notify Consultant"} variant={"outlined"} />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <Button label={"Join Consultantion"} variant={"contained"} />
+              <Button
+                label={"Join Consultantion"}
+                variant={"contained"}
+                onButtonClick={handleButtonClick }
+              />
             </Grid>
           </Grid>
         </Card>

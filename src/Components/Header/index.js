@@ -26,7 +26,7 @@ export default function Header({title,logo}) {
   return (
     <div className={classes.root}>
       <AppBar
-        position="static"
+        position="sticky"
         className={classes.backGroundColor}
         elevation={1}
       >

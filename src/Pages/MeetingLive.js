@@ -4,17 +4,24 @@ import Header from "../Components/Header";
 import ChatBox from "../Components/ChatBox";
 import logo from "../assets/images/tatcha-name-logo.png";
 import useChat from "../Hooks/useChat";
-
+import Controls from "./Controls";
 // import Draggable from "react-draggable";
 // Initialize the SDK and make it available to the window
 const webex = (window.webex = initWebex({
+  config: {
+    meetings: {
+      deviceType: "WEB",
+    }
+  },
   credentials: {
     access_token:
-      "OWQzNzhjNzgtMzc5MS00YjFhLWEzYTctZWQxNTc0ZTk5NjVmYTQxZTQ0ZjktN2E1_PF84_consumer",
-  },
+      "ZWNiMjFmM2MtNWU1Ni00ZGQ4LTkyNDAtMzc5YTAzZThjNDc1Nzc4MmIzYTktYWRh_P0A1_5bec38e4-205e-4e47-80fa-b272c913bcbf",
+    },
+    logger: {
+          level: "error",
+        },
 }));
 
-webex.config.logger.level = "debug";
 
 webex.meetings.register().catch((err) => {
   console.error(err);
@@ -25,9 +32,47 @@ webex.meetings.register().catch((err) => {
 export default function MeetingLive() {
   const videoTag = useRef();
   const RemoteVideoTag = useRef();
+  const RemoteAudioTag = useRef();
   const [text, setText] = useState("");
   const { message } = useChat("room_6077e21a2ab80e74b36bb9d2");
+  const [activeMeeting, setActiveMeeting] = useState();
+  // Listen for added meetings
+  webex.meetings.on("meeting:added", (addedMeetingEvent) => {
+    if (addedMeetingEvent.type === "INCOMING") {
+      const addedMeeting = addedMeetingEvent.meeting;
 
+      // Acknowledge to the server that we received the call on our device
+      addedMeeting.acknowledge(addedMeetingEvent.type).then(() => {
+        if (window.confirm("Answer incoming call")) {
+          joinMeeting(addedMeeting);
+        } else {
+          addedMeeting.decline();
+        }
+      });
+    }
+  });
+
+  // Register our device with Webex cloud
+  if (!webex.meetings.registered) {
+    webex.meetings
+      .register()
+      // Sync our meetings with existing meetings on the server
+      .then(() => webex.meetings.syncMeetings())
+      .then(() => {
+        
+        
+      })
+      // This is a terrible way to handle errors, but anything more specific is
+      // going to depend a lot on your app
+      .catch((err) => {
+        console.error(err);
+        // we'll rethrow here since we didn't really *handle* the error, we just
+        // reported it
+        throw err;
+      });
+  } else {
+    // Device was already connected
+  }
 
   const handleChange = (e) => {
     setText(e.target.value);
@@ -48,6 +93,23 @@ export default function MeetingLive() {
       });
   };
 
+  const handleCancelClick = () => {
+    activeMeeting &&
+      activeMeeting.leave().then(() => {
+        alert("meeting end");
+      });
+  };
+
+  const handleVideoOff = () => {
+    activeMeeting &&
+      activeMeeting
+        .muteVideo()
+        .then(() => {
+          alert("Video off");
+        })
+        .catch((error) => {});
+  };
+
   function bindMeetingEvents(meeting) {
     meeting.on("error", (err) => {
       console.error(err);
@@ -64,13 +126,29 @@ export default function MeetingLive() {
       if (media.type === "remoteVideo" && media.stream) {
         RemoteVideoTag.current.srcObject = media.stream;
       }
+      if (media.type === "remoteAudio" && media.stream) {
+        RemoteAudioTag.current.srcObject = media.stream;
+      }
     });
 
     // Handle media streams stopping
+    meeting.on("media:stopped", (media) => {
+      // Remove media streams
+      if (media.type === "local") {
+        videoTag.current.srcObject = null;
+      }
+      if (media.type === "remoteVideo") {
+        RemoteVideoTag.current.srcObject = null;
+      }
+      if (media.type === "remoteAudio") {
+        RemoteAudioTag.current.srcObject = null;
+      }
+    });
   }
 
   // Join the meeting and add media
   function joinMeeting(meeting) {
+    setActiveMeeting(meeting);
     return meeting.join().then(() => {
       const mediaSettings = {
         receiveVideo: true,
@@ -94,7 +172,7 @@ export default function MeetingLive() {
     });
   }
 
-  console.log("message from meeting page",message)
+  console.log("message from meeting page", message);
   return (
     <div>
       <Header title={""} logo={logo} />
@@ -102,16 +180,23 @@ export default function MeetingLive() {
         style={{
           position: "absolute",
           width: "80%",
-          height: "93.9vh"
+          height: "93.9vh",
         }}
       >
         <video
           width="100%"
           height="100%"
-          style={{objectFit:'cover'}}
+          style={{ objectFit: "cover" }}
           ref={RemoteVideoTag && RemoteVideoTag}
           autoPlay
+          playsInline
         ></video>
+        <audio
+          ref={RemoteAudioTag && RemoteAudioTag}
+          autoPlay
+          playsInline
+        ></audio>
+
         <video
           ref={videoTag && videoTag}
           style={{ position: "absolute", right: "5%" }}
@@ -123,7 +208,11 @@ export default function MeetingLive() {
       <div style={{ position: "absolute" }}>
         <input type="text" value={text} onChange={handleChange}></input>
         <button onClick={handleClick}>join</button>
+        <button onClick={handleCancelClick}>cancel</button>
+        <button onClick={handleVideoOff}>Hide Video</button>
+        <Controls />
       </div>
+
       <div
         style={{
           position: "absolute",

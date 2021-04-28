@@ -1,4 +1,6 @@
-import React,{useState,useEffect} from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+// import axios from "../../api/axios"
 import { makeStyles } from "@material-ui/core/styles";
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
@@ -11,12 +13,13 @@ import IconButton from "@material-ui/core/IconButton";
 import SendRoundedIcon from "@material-ui/icons/SendRounded";
 import Divider from "@material-ui/core/Divider";
 
-import useChat from "../../Hooks/useChat"
+import useChat from "../../Hooks/useChat";
 
 const useStyles = makeStyles((theme) => ({
   root: {
     maxWidth: "auto",
-    height: "93.8vh",
+    padding: "0px",
+    // height: "93.8vh",
   },
   avatar: {
     backgroundColor: theme.palette.primary.main,
@@ -42,15 +45,25 @@ const useStyles = makeStyles((theme) => ({
     display: "inline-block",
   },
   messageInput: {
+    bottom: "0",
+    left: "0",
     position: "absolute",
-    bottom: "0px",
   },
- 
+  messageBody: {
+    overflow: "auto",
+    position: "absolute",
+    width: "100%",
+    top: "80px",
+    bottom: "60px",
+    // [theme.breakpoints.down("sm")]: {
+    //   backgroundColor: theme.palette.secondary.main,
+    // },
+  },
 }));
 
 export default function ChatBox() {
   const classes = useStyles();
-  const { message,sendMessage } = useChat("room_6077e21a2ab80e74b36bb9d2");
+  const { message} = useChat("room_6077e21a2ab80e74b36bb9d2");
   const [newMessage, setNewMessage] = useState("");
 
   const handleNewMessageChange = (e) => {
@@ -58,17 +71,41 @@ export default function ChatBox() {
   };
 
   const handleSendMessage = () => {
-    sendMessage(newMessage)
-    setNewMessage('')
-  }
+     const formData = new FormData();
+     formData.append("message", newMessage);
+     formData.append("roomId", "6077e21a2ab80e74b36bb9d2");
+     formData.append("customerId", "6077e21a2ab80e74b36bb9d4");
+    axios
+      .post("https://vc-petco-client.litmus7.com/site/send",formData)
+      .then(
+        (response) => {
+          console.log(response);
+    // sendMessage(newMessage);
+
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
+    setNewMessage("");
+  };
+  const handleKeypress = (e) => {
+    //it triggers by pressing the enter key
+    if (e.code === "Enter" || e.code === "NumpadEnter") {
+      handleSendMessage();
+    }
+  };
 
   useEffect(() => {
-    document.querySelector('#ui').scrollTop=document.querySelector('#ui').scrollHeight
-  },[message])
+    document.querySelector("#ui").scrollTop = document.querySelector(
+      "#ui"
+    ).scrollHeight;
+  }, [message]);
 
   return (
     <Card className={classes.root}>
       <CardHeader
+        style={{ textAlign: "left" }}
         avatar={
           <Avatar aria-label="caht-avatar" className={classes.avatar}>
             T
@@ -78,11 +115,11 @@ export default function ChatBox() {
         subheader="September 14, 2016"
       />
       <Divider />
-      <CardContent id="ui" style={{overflow: 'auto',maxHeight: '74%'}}>
+      <CardContent id="ui" className={classes.messageBody}>
         {message &&
           message.map((chat, index) => {
             return (
-              <div  key={index}>
+              <div key={index}>
                 {(() => {
                   if (chat.type === "agent") {
                     return (
@@ -129,6 +166,7 @@ export default function ChatBox() {
           type="text"
           value={newMessage}
           onChange={handleNewMessageChange}
+          onKeyPress={handleKeypress}
           endAdornment={
             <InputAdornment position="end">
               <IconButton
@@ -146,3 +184,6 @@ export default function ChatBox() {
     </Card>
   );
 }
+
+
+

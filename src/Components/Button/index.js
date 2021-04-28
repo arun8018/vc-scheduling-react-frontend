@@ -6,11 +6,16 @@ import Button from "@material-ui/core/Button";
 //     color: theme.palette.primary.main,
 //   },
 // }));
-export default function MainButton({label,variant}) {
-    // const classes = useStyles();
-    return (
-        <Button variant={variant} color="primary" style={{width:"100%"}}>
-        {label}
-      </Button>
-    );
+export default function MainButton({ label, variant, onButtonClick }) {
+  // const classes = useStyles();
+  return (
+    <Button
+      variant={variant}
+      color="primary"
+      style={{ width: "100%" }}
+      onClick={onButtonClick}
+    >
+      {label}
+    </Button>
+  );
 }
